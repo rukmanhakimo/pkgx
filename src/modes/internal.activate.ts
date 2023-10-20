@@ -26,7 +26,7 @@ export default async function(dir: Path, { powder, ...opts }: { powder: PackageR
   }
 
   /// indicate to our shell scripts that this devenv is activated
-  const persistence = datadir().join("dev", dir.string.slice(1)).mkdir('p').join("dev.pkgx.activated").touch()
+  const persistence = datadir().join("dev", stem(dir)).mkdir('p').join("dev.pkgx.activated").touch()
 
   const installations = await install(pkgs, { update: false, ...opts })
   const env = await construct_env(installations)
@@ -123,4 +123,17 @@ export const _internals = {
   construct_env,
   datadir: () => hooks.useConfig().data,
   getenv: Deno.env.get
+}
+
+function stem(path: Path) {
+  if (Deno.build.os == 'windows') {
+    const str = path.string
+    if (/^[a-zA-Z]:/.test(str)) {
+      return str.slice(0, 1) + "/" + str.slice(2)
+    } else {
+      return str  // network drive
+    }
+  } else {
+    return path.string.slice(1)
+  }
 }
